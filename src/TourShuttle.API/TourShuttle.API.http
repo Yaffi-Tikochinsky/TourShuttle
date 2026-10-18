@@ -1,0 +1,5 @@
+@TourShuttle.API_HostAddress = http://localhost:5282
+
+# Requests will be added here as endpoints are built.
+
+###
