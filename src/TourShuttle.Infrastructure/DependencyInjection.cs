@@ -1,7 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using TourShuttle.Application.Interfaces;
 using TourShuttle.Infrastructure.Persistence;
+using TourShuttle.Infrastructure.Repositories;
+using TourShuttle.Infrastructure.Security;
 
 namespace TourShuttle.Infrastructure;
 
@@ -22,6 +25,14 @@ public static class DependencyInjection
         services.AddDbContext<AppDbContext>(options => options
             .UseNpgsql(connectionString)
             .UseAsyncSeeding((context, _, ct) => DbSeeder.SeedAsync(context, ct)));
+
+        // Scoped, because they depend on the scoped AppDbContext.
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddScoped<IUserRepository, UserRepository>();
+
+        // Singletons are safe here: neither holds a scoped dependency (only IOptions or nothing).
+        services.AddSingleton<IPasswordHasher, PasswordHasher>();
+        services.AddSingleton<IJwtTokenService, JwtTokenService>();
 
         return services;
     }

@@ -1,19 +1,75 @@
 using Microsoft.EntityFrameworkCore;
 using TourShuttle.Domain.Entities;
 using TourShuttle.Domain.Enums;
+using TourShuttle.Infrastructure.Security;
 
 namespace TourShuttle.Infrastructure.Persistence;
 
 /// <summary>
-/// Demo data for an empty database, so the system can be tried right after it starts.
+/// Demo data, so the system can be tried right after it starts.
+/// Each part checks its own table, so a database seeded by an earlier version still gets the newer parts.
 /// Tour times are relative to "now" so the demo tours are always in the future.
-/// Users are seeded in stage 3, once password hashing exists.
 /// </summary>
 public static class DbSeeder
 {
     private static readonly TimeZoneInfo IsraelTime = TimeZoneInfo.FindSystemTimeZoneById("Asia/Jerusalem");
 
     public static async Task SeedAsync(DbContext context, CancellationToken ct)
+    {
+        await SeedToursAsync(context, ct);
+        await SeedUsersAsync(context, ct);
+    }
+
+    /// <summary>
+    /// Demo accounts for every role. The passwords are public on purpose: the course requires
+    /// demo users with their credentials in the README.
+    /// </summary>
+    private static async Task SeedUsersAsync(DbContext context, CancellationToken ct)
+    {
+        if (await context.Set<User>().AnyAsync(ct))
+        {
+            return;
+        }
+
+        // The seeder runs outside the request pipeline, so it creates the stateless hasher directly.
+        var hasher = new PasswordHasher();
+
+        User NewUser(string fullName, string email, string phone, string password, UserRole role) => new()
+        {
+            FullName = fullName,
+            Email = email,
+            Phone = phone,
+            PasswordHash = hasher.Hash(password),
+            Role = role
+        };
+
+        var drivers = new[]
+        {
+            NewUser("משה הנהג", "driver1@tourshuttle.demo", "050-1111111", "Driver123!", UserRole.Driver),
+            NewUser("אהרון הנהג", "driver2@tourshuttle.demo", "050-2222222", "Driver123!", UserRole.Driver)
+        };
+
+        context.AddRange(
+            NewUser("מנהל המערכת", "admin@tourshuttle.demo", "050-0000000", "Admin123!", UserRole.Admin),
+            NewUser("ישראל ישראלי", "customer1@tourshuttle.demo", "052-1111111", "Customer123!", UserRole.Customer),
+            NewUser("שרה כהן", "customer2@tourshuttle.demo", "052-2222222", "Customer123!", UserRole.Customer));
+        context.AddRange(drivers);
+
+        // Alternate the drivers over the tours, so each driver has tours of their own
+        // and a 403 can be shown when a driver opens another driver's passenger list.
+        var tours = await context.Set<Tour>()
+            .Where(t => t.DriverId == null)
+            .OrderBy(t => t.DepartureAt)
+            .ToListAsync(ct);
+        for (var i = 0; i < tours.Count; i++)
+        {
+            tours[i].Driver = drivers[i % drivers.Length];
+        }
+
+        await context.SaveChangesAsync(ct);
+    }
+
+    private static async Task SeedToursAsync(DbContext context, CancellationToken ct)
     {
         if (await context.Set<Destination>().AnyAsync(ct))
         {
