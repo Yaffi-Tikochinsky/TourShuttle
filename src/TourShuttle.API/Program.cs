@@ -15,13 +15,19 @@ var app = builder.Build();
 await app.Services.InitializeDatabaseAsync();
 
 // Configure the HTTP request pipeline.
+// Swagger is on in every environment: it is the API documentation the course reviews on Render.
+app.UseSwagger();
+app.UseSwaggerUI();
+
+// The bare service URL opens the documentation.
+app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();
+
+// On Render, HTTPS ends at Render's proxy and the container only receives HTTP,
+// so redirecting is only meaningful when running locally.
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseHttpsRedirection();
 }
-
-app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
