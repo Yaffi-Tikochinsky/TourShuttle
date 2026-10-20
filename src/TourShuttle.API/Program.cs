@@ -107,7 +107,8 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 // The bare service URL opens the documentation.
-app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();
+// HEAD too: Render probes "/" with HEAD after a deploy, which used to get 405.
+app.MapMethods("/", [HttpMethods.Get, HttpMethods.Head], () => Results.Redirect("/swagger")).ExcludeFromDescription();
 
 // On Render, HTTPS ends at Render's proxy and the container only receives HTTP,
 // so redirecting is only meaningful when running locally.

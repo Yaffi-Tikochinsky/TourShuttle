@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Npgsql;
 using TourShuttle.Application.Interfaces;
 using TourShuttle.Infrastructure.Persistence;
 using TourShuttle.Infrastructure.Repositories;
@@ -21,9 +22,17 @@ public static class DependencyInjection
                 "Connection string 'Default' is missing. In development set it with dotnet user-secrets; " +
                 "in production set the ConnectionStrings__Default environment variable.");
 
+        // Npgsql tries GSS (Kerberos) encryption by default, which needs a native library the slim .NET image
+        // does not have: every start printed a red "Cannot load library libgssapi_krb5.so.2" before falling back
+        // to the password login we use anyway. Turning it off removes the noise; nothing else changes.
+        var npgsqlConnectionString = new NpgsqlConnectionStringBuilder(connectionString)
+        {
+            GssEncryptionMode = GssEncryptionMode.Disable
+        }.ConnectionString;
+
         // AddDbContext registers AppDbContext as Scoped: one instance per HTTP request.
         services.AddDbContext<AppDbContext>(options => options
-            .UseNpgsql(connectionString)
+            .UseNpgsql(npgsqlConnectionString)
             .UseAsyncSeeding((context, _, ct) => DbSeeder.SeedAsync(context, ct)));
 
         // Scoped, because they depend on the scoped AppDbContext.
