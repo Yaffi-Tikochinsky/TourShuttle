@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TourShuttle.API.Extensions;
+using TourShuttle.Application.DTOs.Auth;
 using TourShuttle.Application.DTOs.Users;
 using TourShuttle.Application.Services;
 using TourShuttle.Domain.Enums;
@@ -12,10 +13,12 @@ namespace TourShuttle.API.Controllers;
 public class UsersController : ApiControllerBase
 {
     private readonly IUserService _users;
+    private readonly IAuthService _auth;
 
-    public UsersController(IUserService users)
+    public UsersController(IUserService users, IAuthService auth)
     {
         _users = users;
+        _auth = auth;
     }
 
     /// <summary>The profile of the signed-in user.</summary>
@@ -42,4 +45,23 @@ public class UsersController : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<IReadOnlyList<UserResponse>>> List([FromQuery] UserRole? role, CancellationToken ct) =>
         Ok(await _users.ListAsync(role, ct));
+
+    /// <summary>An admin adds a driver: the same fields as registration. 409 when the email is taken.</summary>
+    [HttpPost("drivers")]
+    [Authorize(Roles = nameof(UserRole.Admin))]
+    [ProducesResponseType<UserResponse>(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<UserResponse>> CreateDriver([FromBody] RegisterRequest request, CancellationToken ct)
+    {
+        var result = await _auth.CreateDriverAsync(request, ct);
+        if (!result.IsSuccess)
+        {
+            return Failure(result);
+        }
+
+        return CreatedAtAction(nameof(GetById), new { id = result.Value!.Id }, result.Value);
+    }
 }

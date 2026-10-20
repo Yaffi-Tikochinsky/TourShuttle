@@ -77,6 +77,31 @@ public class AuthServiceTests
     }
 
     [Fact]
+    public async Task An_admin_creates_a_driver_with_the_same_account_rules_and_no_token()
+    {
+        var result = await CreateService().CreateDriverAsync(Registration(), default);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(UserRole.Driver, _added!.Role);
+        Assert.Equal("yaffi@example.com", _added.Email);
+        Assert.Equal("hashed-password", _added.PasswordHash);
+        Assert.Equal("Driver", result.Value!.Role);
+        // The admin stays signed in as themselves: no token is made for the new driver.
+        _tokens.Verify(t => t.CreateToken(It.IsAny<User>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task Creating_a_driver_with_a_taken_email_is_a_conflict()
+    {
+        _users.Setup(u => u.EmailExistsAsync("yaffi@example.com", It.IsAny<CancellationToken>())).ReturnsAsync(true);
+
+        var result = await CreateService().CreateDriverAsync(Registration(), default);
+
+        Assert.Equal(ResultStatus.Conflict, result.Status);
+        _users.Verify(u => u.Add(It.IsAny<User>()), Times.Never);
+    }
+
+    [Fact]
     public async Task Unknown_email_and_wrong_password_get_the_same_answer()
     {
         var user = TestData.User(3, UserRole.Customer);

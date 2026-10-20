@@ -26,6 +26,9 @@ public class DestinationRepository : IDestinationRepository
     public Task<bool> HasToursAsync(int id, CancellationToken ct) =>
         _db.Tours.AnyAsync(t => t.DestinationId == id, ct);
 
+    public Task<bool> NameExistsAsync(string name, int? exceptId, CancellationToken ct) =>
+        _db.Destinations.AnyAsync(d => d.Name == name && d.Id != exceptId, ct);
+
     public void Add(Destination destination) => _db.Destinations.Add(destination);
 
     public void Remove(Destination destination) => _db.Destinations.Remove(destination);

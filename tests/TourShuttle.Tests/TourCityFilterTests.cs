@@ -39,11 +39,13 @@ public sealed class TourCityFilterTests : IDisposable
         var jabotinsky = new PickupPoint { Name = "ז'בוטינסקי", Address = "ז'בוטינסקי 10", City = BneiBrak };
         var bourse = new PickupPoint { Name = "הבורסה", Address = "ז'בוטינסקי 7", City = RamatGan };
         var center = new PickupPoint { Name = "מרכז העיר", Address = "עמק דותן 1", City = Modiin };
+        // One destination shared by every tour: destination names are unique.
+        var wall = new Destination { Name = "הכותל המערבי", City = "ירושלים" };
 
         // Two stops in Bnei Brak, then Ramat Gan: the city list must keep route order and list Bnei Brak once.
-        var coastal = AddTour(db, daysAhead: 1, TourStatus.Scheduled, rabbiAkiva, jabotinsky, bourse);
-        var modiin = AddTour(db, daysAhead: 2, TourStatus.Scheduled, center);
-        var cancelled = AddTour(db, daysAhead: 3, TourStatus.Cancelled, bourse);
+        var coastal = AddTour(db, wall, daysAhead: 1, TourStatus.Scheduled, rabbiAkiva, jabotinsky, bourse);
+        var modiin = AddTour(db, wall, daysAhead: 2, TourStatus.Scheduled, center);
+        var cancelled = AddTour(db, wall, daysAhead: 3, TourStatus.Cancelled, bourse);
         db.SaveChanges();
 
         _tourIds["coastal"] = coastal.Id;
@@ -53,12 +55,12 @@ public sealed class TourCityFilterTests : IDisposable
 
     public void Dispose() => _connection.Dispose();
 
-    private static Tour AddTour(AppDbContext db, int daysAhead, TourStatus status, params PickupPoint[] route)
+    private static Tour AddTour(AppDbContext db, Destination destination, int daysAhead, TourStatus status, params PickupPoint[] route)
     {
         var departure = TestData.Now.AddDays(daysAhead);
         var tour = new Tour
         {
-            Destination = new Destination { Name = "הכותל המערבי", City = "ירושלים" },
+            Destination = destination,
             DepartureAt = departure,
             ReturnAt = departure.AddHours(4),
             Capacity = 10,

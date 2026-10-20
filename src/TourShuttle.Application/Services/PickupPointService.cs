@@ -11,6 +11,8 @@ public class PickupPointService : IPickupPointService
 {
     private const string InUse = "The pickup point is on the route of at least one tour. Remove it from those tours first.";
 
+    private static string NameTaken(string name) => $"A pickup point named '{name}' already exists.";
+
     private readonly IPickupPointRepository _pickupPoints;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
@@ -41,8 +43,21 @@ public class PickupPointService : IPickupPointService
     public async Task<Result<PickupPointResponse>> CreateAsync(PickupPointRequest request, CancellationToken ct)
     {
         var pickupPoint = _mapper.Map<PickupPoint>(request);
+        Trim(pickupPoint);
+        if (await _pickupPoints.NameExistsAsync(pickupPoint.Name, null, ct))
+        {
+            return Result<PickupPointResponse>.Conflict(NameTaken(pickupPoint.Name));
+        }
+
         _pickupPoints.Add(pickupPoint);
-        await _unitOfWork.SaveChangesAsync(ct);
+        try
+        {
+            await _unitOfWork.SaveChangesAsync(ct);
+        }
+        catch (UniqueConstraintException)
+        {
+            return Result<PickupPointResponse>.Conflict(NameTaken(pickupPoint.Name));
+        }
 
         _logger.LogInformation("Pickup point {PickupPointId} created", pickupPoint.Id);
         return Result<PickupPointResponse>.Success(_mapper.Map<PickupPointResponse>(pickupPoint));
@@ -57,7 +72,20 @@ public class PickupPointService : IPickupPointService
         }
 
         _mapper.Map(request, pickupPoint);
-        await _unitOfWork.SaveChangesAsync(ct);
+        Trim(pickupPoint);
+        if (await _pickupPoints.NameExistsAsync(pickupPoint.Name, id, ct))
+        {
+            return Result.Conflict(NameTaken(pickupPoint.Name));
+        }
+
+        try
+        {
+            await _unitOfWork.SaveChangesAsync(ct);
+        }
+        catch (UniqueConstraintException)
+        {
+            return Result.Conflict(NameTaken(pickupPoint.Name));
+        }
 
         _logger.LogInformation("Pickup point {PickupPointId} updated", id);
         return Result.Success();
@@ -92,4 +120,12 @@ public class PickupPointService : IPickupPointService
     }
 
     private static string NotFoundMessage(int id) => $"Pickup point {id} was not found.";
+
+    /// <summary>Compared and stored without outer spaces; the city especially, since customers filter by it.</summary>
+    private static void Trim(PickupPoint pickupPoint)
+    {
+        pickupPoint.Name = pickupPoint.Name.Trim();
+        pickupPoint.Address = pickupPoint.Address.Trim();
+        pickupPoint.City = pickupPoint.City.Trim();
+    }
 }

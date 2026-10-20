@@ -14,5 +14,8 @@ public class PickupPointConfiguration : IEntityTypeConfiguration<PickupPoint>
 
         // Tours are filtered by the cities of their stops, and the city list is read for the search box.
         builder.HasIndex(p => p.City);
+
+        // A stop's name is how admins and customers tell stops apart (it usually starts with the city), so it is unique.
+        builder.HasIndex(p => p.Name).IsUnique();
     }
 }

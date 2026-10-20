@@ -36,6 +36,9 @@ public class PickupPointRepository : IPickupPointRepository
     public Task<bool> IsUsedByToursAsync(int id, CancellationToken ct) =>
         _db.TourPickupPoints.AnyAsync(tp => tp.PickupPointId == id, ct);
 
+    public Task<bool> NameExistsAsync(string name, int? exceptId, CancellationToken ct) =>
+        _db.PickupPoints.AnyAsync(p => p.Name == name && p.Id != exceptId, ct);
+
     public void Add(PickupPoint pickupPoint) => _db.PickupPoints.Add(pickupPoint);
 
     public void Remove(PickupPoint pickupPoint) => _db.PickupPoints.Remove(pickupPoint);

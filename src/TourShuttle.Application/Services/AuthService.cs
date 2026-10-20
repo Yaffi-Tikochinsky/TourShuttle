@@ -35,21 +35,47 @@ public class AuthService : IAuthService
 
     public async Task<Result<AuthResponse>> RegisterAsync(RegisterRequest request, CancellationToken ct)
     {
+        // Self-registration always creates a customer. Drivers are created by an admin (CreateDriverAsync),
+        // and the first admin comes from the seed.
+        var (user, error) = await CreateUserAsync(request, UserRole.Customer, ct);
+        if (user is null)
+        {
+            return Result<AuthResponse>.Conflict(error!);
+        }
+
+        _logger.LogInformation("User {UserId} registered", user.Id);
+        return Result<AuthResponse>.Success(BuildResponse(user));
+    }
+
+    public async Task<Result<UserResponse>> CreateDriverAsync(RegisterRequest request, CancellationToken ct)
+    {
+        var (user, error) = await CreateUserAsync(request, UserRole.Driver, ct);
+        if (user is null)
+        {
+            return Result<UserResponse>.Conflict(error!);
+        }
+
+        _logger.LogInformation("Driver {UserId} created by an admin", user.Id);
+        return Result<UserResponse>.Success(_mapper.Map<UserResponse>(user));
+    }
+
+    /// <summary>One place for the account rules: normalized unique email, trimmed fields, hashed password.</summary>
+    private async Task<(User? User, string? Error)> CreateUserAsync(RegisterRequest request, UserRole role, CancellationToken ct)
+    {
         var email = NormalizeEmail(request.Email);
 
         if (await _users.EmailExistsAsync(email, ct))
         {
-            return Result<AuthResponse>.Conflict(EmailTaken);
+            return (null, EmailTaken);
         }
 
-        // Self-registration always creates a customer; admins and drivers are created by the system.
         var user = new User
         {
             FullName = request.FullName.Trim(),
             Email = email,
             Phone = request.Phone.Trim(),
             PasswordHash = _passwordHasher.Hash(request.Password),
-            Role = UserRole.Customer
+            Role = role
         };
 
         _users.Add(user);
@@ -59,13 +85,12 @@ public class AuthService : IAuthService
         }
         catch (UniqueConstraintException)
         {
-            // Two registrations with the same email passed the check above at the same moment;
+            // Two requests with the same email passed the check above at the same moment;
             // the unique index on Email let only one of them in.
-            return Result<AuthResponse>.Conflict(EmailTaken);
+            return (null, EmailTaken);
         }
 
-        _logger.LogInformation("User {UserId} registered", user.Id);
-        return Result<AuthResponse>.Success(BuildResponse(user));
+        return (user, null);
     }
 
     public async Task<Result<AuthResponse>> LoginAsync(LoginRequest request, CancellationToken ct)

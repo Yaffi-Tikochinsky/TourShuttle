@@ -96,6 +96,9 @@ namespace TourShuttle.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Name")
+                        .IsUnique();
+
                     b.ToTable("Destinations");
                 });
 
@@ -125,6 +128,9 @@ namespace TourShuttle.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("City");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
 
                     b.ToTable("PickupPoints");
                 });

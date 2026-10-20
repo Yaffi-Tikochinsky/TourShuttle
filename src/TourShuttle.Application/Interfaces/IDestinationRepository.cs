@@ -14,6 +14,8 @@ public interface IDestinationRepository
     Task<Destination?> GetForUpdateAsync(int id, CancellationToken ct);
 
     Task<bool> HasToursAsync(int id, CancellationToken ct);
+    /// <summary>True when another destination (not <paramref name="exceptId"/>) already has this name.</summary>
+    Task<bool> NameExistsAsync(string name, int? exceptId, CancellationToken ct);
 
     void Add(Destination destination);
 

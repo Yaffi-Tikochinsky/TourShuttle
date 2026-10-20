@@ -11,6 +11,8 @@ public class DestinationService : IDestinationService
 {
     private const string HasTours = "The destination has tours. Delete its tours first.";
 
+    private static string NameTaken(string name) => $"A destination named '{name}' already exists.";
+
     private readonly IDestinationRepository _destinations;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
@@ -39,8 +41,22 @@ public class DestinationService : IDestinationService
     public async Task<Result<DestinationResponse>> CreateAsync(DestinationRequest request, CancellationToken ct)
     {
         var destination = _mapper.Map<Destination>(request);
+        Trim(destination);
+        if (await _destinations.NameExistsAsync(destination.Name, null, ct))
+        {
+            return Result<DestinationResponse>.Conflict(NameTaken(destination.Name));
+        }
+
         _destinations.Add(destination);
-        await _unitOfWork.SaveChangesAsync(ct);
+        try
+        {
+            await _unitOfWork.SaveChangesAsync(ct);
+        }
+        catch (UniqueConstraintException)
+        {
+            // The same name was saved by another request between the check and the save.
+            return Result<DestinationResponse>.Conflict(NameTaken(destination.Name));
+        }
 
         _logger.LogInformation("Destination {DestinationId} created", destination.Id);
         return Result<DestinationResponse>.Success(_mapper.Map<DestinationResponse>(destination));
@@ -56,7 +72,20 @@ public class DestinationService : IDestinationService
 
         // Copies the request onto the tracked entity; EF Core saves only the columns that changed.
         _mapper.Map(request, destination);
-        await _unitOfWork.SaveChangesAsync(ct);
+        Trim(destination);
+        if (await _destinations.NameExistsAsync(destination.Name, id, ct))
+        {
+            return Result.Conflict(NameTaken(destination.Name));
+        }
+
+        try
+        {
+            await _unitOfWork.SaveChangesAsync(ct);
+        }
+        catch (UniqueConstraintException)
+        {
+            return Result.Conflict(NameTaken(destination.Name));
+        }
 
         _logger.LogInformation("Destination {DestinationId} updated", id);
         return Result.Success();
@@ -91,4 +120,12 @@ public class DestinationService : IDestinationService
     }
 
     private static string NotFoundMessage(int id) => $"Destination {id} was not found.";
+
+    /// <summary>" הכותל " and "הכותל" are the same name: compared and stored without outer spaces.</summary>
+    private static void Trim(Destination destination)
+    {
+        destination.Name = destination.Name.Trim();
+        destination.City = destination.City.Trim();
+        destination.Description = string.IsNullOrWhiteSpace(destination.Description) ? null : destination.Description.Trim();
+    }
 }

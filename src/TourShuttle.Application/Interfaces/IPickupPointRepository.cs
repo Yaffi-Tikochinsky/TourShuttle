@@ -21,6 +21,8 @@ public interface IPickupPointRepository
 
     /// <summary>True when any tour's route includes the point.</summary>
     Task<bool> IsUsedByToursAsync(int id, CancellationToken ct);
+    /// <summary>True when another pickup point (not <paramref name="exceptId"/>) already has this name.</summary>
+    Task<bool> NameExistsAsync(string name, int? exceptId, CancellationToken ct);
 
     void Add(PickupPoint pickupPoint);
 
