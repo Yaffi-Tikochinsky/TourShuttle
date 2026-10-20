@@ -148,6 +148,9 @@ namespace TourShuttle.Infrastructure.Persistence.Migrations
                     b.Property<int>("MaxSeatsPerBooking")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("MinutesBetweenPickupPoints")
+                        .HasColumnType("integer");
+
                     b.Property<decimal>("Price")
                         .HasPrecision(10, 2)
                         .HasColumnType("numeric(10,2)");
@@ -179,6 +182,8 @@ namespace TourShuttle.Infrastructure.Persistence.Migrations
                             t.HasCheckConstraint("CK_Tours_Capacity", "\"Capacity\" > 0");
 
                             t.HasCheckConstraint("CK_Tours_MaxSeatsPerBooking", "\"MaxSeatsPerBooking\" >= 1 AND \"MaxSeatsPerBooking\" <= \"Capacity\"");
+
+                            t.HasCheckConstraint("CK_Tours_MinutesBetweenPickupPoints", "\"MinutesBetweenPickupPoints\" IS NULL OR \"MinutesBetweenPickupPoints\" BETWEEN 1 AND 30");
 
                             t.HasCheckConstraint("CK_Tours_Price", "\"Price\" >= 0");
 

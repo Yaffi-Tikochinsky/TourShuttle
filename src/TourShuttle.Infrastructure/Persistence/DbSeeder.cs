@@ -120,6 +120,8 @@ public static class DbSeeder
                 petahTikva, bneiBrak, beitShemesh, modiin, ramatGan),
         };
         tours[^1].Status = TourStatus.Cancelled;
+        // The 09:00 tour would get 2 minutes from its band; a custom value shows the override winning.
+        tours[0].MinutesBetweenPickupPoints = 4;
 
         // Alternate the drivers, so each driver has tours of their own
         // and a 403 can be shown when a driver opens another driver's passenger list.

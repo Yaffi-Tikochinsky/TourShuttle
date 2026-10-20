@@ -81,9 +81,8 @@ public class TourService : ITourService
         var response = _mapper.Map<TourDetailsResponse>(tour);
         response.DisplayStatus = TourDisplayStatusCalculator.Calculate(tour.Status, tour.DepartureAt, tour.ReturnAt, UtcNow());
 
-        // The tour has no minutes override yet (stage 8 adds the column), so it passes null.
         // Asked once per tour; every point's time is derived from the same answer.
-        var minutes = _estimator.GetMinutesBetweenPoints(tour.DepartureAt, null);
+        var minutes = _estimator.GetMinutesBetweenPoints(tour.DepartureAt, tour.MinutesBetweenPickupPoints);
         response.MinutesBetweenPickupPoints = minutes;
         foreach (var point in response.PickupPoints)
         {
@@ -120,7 +119,8 @@ public class TourService : ITourService
             Capacity = request.Capacity,
             AvailableSeats = request.Capacity,
             MaxSeatsPerBooking = request.MaxSeatsPerBooking,
-            Price = request.Price
+            Price = request.Price,
+            MinutesBetweenPickupPoints = request.MinutesBetweenPickupPoints
         };
         AddRoute(tour, request.PickupPointIds);
 
@@ -176,6 +176,9 @@ public class TourService : ITourService
         tour.AvailableSeats = request.Capacity - bookedSeats;
         tour.MaxSeatsPerBooking = request.MaxSeatsPerBooking;
         tour.Price = request.Price;
+        // Not locked by bookings, on purpose: it reflects real traffic, so customers who already booked
+        // should see the updated estimate. The client warns that pickup times are estimates.
+        tour.MinutesBetweenPickupPoints = request.MinutesBetweenPickupPoints;
 
         try
         {
@@ -260,7 +263,7 @@ public class TourService : ITourService
         }
 
         // The data is already in memory (one query); grouping it here adds no queries.
-        var minutes = _estimator.GetMinutesBetweenPoints(tour.DepartureAt, null);
+        var minutes = _estimator.GetMinutesBetweenPoints(tour.DepartureAt, tour.MinutesBetweenPickupPoints);
         var pickupPoints = tour.PickupPoints
             .OrderBy(p => p.Order)
             .Select(point =>

@@ -79,6 +79,18 @@ public class BookingServiceTests
     }
 
     [Fact]
+    public async Task Booking_shows_the_pickup_time_from_the_tours_own_minutes()
+    {
+        var tour = TestData.Tour(capacity: 10, route: [1, 2, 3], minutesBetweenPickupPoints: 4);
+        TourInDatabase(tour);
+
+        var result = await CreateService().CreateAsync(tour.Id, CustomerId, Request(pickupPointId: 3, seats: 1), default);
+
+        // Third stop: departure + 2 × 4 minutes (the band would have given 2 × 2).
+        Assert.Equal(tour.DepartureAt.AddMinutes(8), result.Value!.EstimatedPickupTimeUtc);
+    }
+
+    [Fact]
     public async Task More_seats_than_available_is_a_conflict_and_nothing_is_saved()
     {
         var tour = TestData.Tour(capacity: 3, availableSeats: 1);

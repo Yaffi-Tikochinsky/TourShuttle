@@ -85,6 +85,20 @@ public sealed class TourConcurrencyTests : IDisposable
         await Assert.ThrowsAsync<ConcurrencyConflictException>(() => new UnitOfWork(familyB).SaveChangesAsync(default));
     }
 
+    [Theory]
+    [InlineData(0)]
+    [InlineData(31)]
+    public async Task Database_refuses_minutes_outside_1_to_30(int minutes)
+    {
+        // The check constraint added by the AddTourMinutesOverride migration, enforced by the database itself.
+        await using var db = NewContext();
+        var tour = await db.Tours.SingleAsync(t => t.Id == _tourId);
+
+        tour.MinutesBetweenPickupPoints = minutes;
+
+        await Assert.ThrowsAsync<DbUpdateException>(() => db.SaveChangesAsync());
+    }
+
     [Fact]
     public async Task Every_save_of_a_changed_tour_renews_its_Version()
     {

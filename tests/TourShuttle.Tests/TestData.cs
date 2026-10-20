@@ -52,7 +52,7 @@ public static class TestData
     /// </summary>
     public static Tour Tour(int id = 5, int capacity = 3, int? availableSeats = null, int maxSeatsPerBooking = 3,
         decimal price = 70m, DateTime? departureAt = null, TourStatus status = TourStatus.Scheduled,
-        int? driverId = null, int[]? route = null)
+        int? driverId = null, int[]? route = null, int? minutesBetweenPickupPoints = null)
     {
         var departure = departureAt ?? Now.AddDays(3);
         var tour = new Tour
@@ -67,6 +67,7 @@ public static class TestData
             AvailableSeats = availableSeats ?? capacity,
             MaxSeatsPerBooking = maxSeatsPerBooking,
             Price = price,
+            MinutesBetweenPickupPoints = minutesBetweenPickupPoints,
             Status = status
         };
 

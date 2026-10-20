@@ -60,6 +60,7 @@ public class TourServiceUpdateTests
         Capacity = tour.Capacity,
         MaxSeatsPerBooking = tour.MaxSeatsPerBooking,
         Price = tour.Price,
+        MinutesBetweenPickupPoints = tour.MinutesBetweenPickupPoints,
         PickupPointIds = tour.PickupPoints.OrderBy(p => p.Order).Select(p => p.PickupPointId).ToList()
     };
 
@@ -177,6 +178,35 @@ public class TourServiceUpdateTests
         Assert.Equal(ResultStatus.Validation, result.Status);
         Assert.Contains("not a driver", result.Error);
         VerifyNothingSaved();
+    }
+
+    [Fact]
+    public async Task Minutes_between_stops_can_change_even_after_bookings_exist()
+    {
+        // Decided on purpose: the value reflects real traffic, so booked customers should see the new estimate.
+        var tour = TourInDatabase(hasBookings: true);
+        var request = Unchanged(tour);
+        request.MinutesBetweenPickupPoints = 4;
+
+        var result = await CreateService().UpdateAsync(tour.Id, request, default);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(4, tour.MinutesBetweenPickupPoints);
+    }
+
+    [Fact]
+    public async Task Put_without_the_minutes_clears_a_stored_value()
+    {
+        // PUT replaces every field. This is why GET returns customMinutesBetweenPickupPoints: to send it back.
+        var tour = TourInDatabase(hasBookings: false);
+        tour.MinutesBetweenPickupPoints = 4;
+        var request = Unchanged(tour);
+        request.MinutesBetweenPickupPoints = null;
+
+        var result = await CreateService().UpdateAsync(tour.Id, request, default);
+
+        Assert.True(result.IsSuccess);
+        Assert.Null(tour.MinutesBetweenPickupPoints);
     }
 
     [Fact]

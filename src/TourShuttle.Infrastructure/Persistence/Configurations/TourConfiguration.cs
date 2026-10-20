@@ -16,6 +16,8 @@ public class TourConfiguration : IEntityTypeConfiguration<Tour>
             t.HasCheckConstraint("CK_Tours_MaxSeatsPerBooking", "\"MaxSeatsPerBooking\" >= 1 AND \"MaxSeatsPerBooking\" <= \"Capacity\"");
             t.HasCheckConstraint("CK_Tours_Price", "\"Price\" >= 0");
             t.HasCheckConstraint("CK_Tours_ReturnAfterDeparture", "\"ReturnAt\" > \"DepartureAt\"");
+            t.HasCheckConstraint("CK_Tours_MinutesBetweenPickupPoints",
+                "\"MinutesBetweenPickupPoints\" IS NULL OR \"MinutesBetweenPickupPoints\" BETWEEN 1 AND 30");
         });
 
         builder.Property(t => t.Price).HasPrecision(10, 2);

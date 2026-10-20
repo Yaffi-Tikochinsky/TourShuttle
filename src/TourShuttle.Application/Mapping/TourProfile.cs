@@ -19,7 +19,9 @@ public class TourProfile : Profile
         CreateMap<Tour, TourDetailsResponse>()
             .IncludeBase<Tour, TourSummaryResponse>()
             .ForMember(dest => dest.DestinationDescription, opt => opt.MapFrom(src => src.Destination.Description))
+            // The effective value needs the estimator, so the service sets it; the stored one maps straight across.
             .ForMember(dest => dest.MinutesBetweenPickupPoints, opt => opt.Ignore())
+            .ForMember(dest => dest.CustomMinutesBetweenPickupPoints, opt => opt.MapFrom(src => src.MinutesBetweenPickupPoints))
             .ForMember(dest => dest.PickupPoints, opt => opt.MapFrom(src => src.PickupPoints.OrderBy(p => p.Order)));
 
         CreateMap<TourPickupPoint, TourPickupPointResponse>()

@@ -26,6 +26,12 @@ public class Tour
     public int AvailableSeats { get; set; }
     public int MaxSeatsPerBooking { get; set; }
     public decimal Price { get; set; }
+    /// <summary>
+    /// Minutes between consecutive pickup points for this tour only (for example, a route through heavy traffic).
+    /// Null means "use the departure-hour band"; when set, it wins over the band.
+    /// </summary>
+    public int? MinutesBetweenPickupPoints { get; set; }
+
     public TourStatus Status { get; set; } = TourStatus.Scheduled;
 
     /// <summary>Renewed on every update; a stale value makes the update fail with a conflict.</summary>

@@ -8,8 +8,14 @@ public class TourDetailsResponse : TourSummaryResponse
     /// <summary>Filled for admins only, so they can reassign the tour.</summary>
     public int? DriverId { get; set; }
 
-    /// <summary>The value the estimated times below were computed with.</summary>
+    /// <summary>The value the estimated times below were computed with (the tour's own value or the band's).</summary>
     public int MinutesBetweenPickupPoints { get; set; }
+
+    /// <summary>
+    /// The value stored on the tour, or null when the band decides. An edit form uses it as the input's value
+    /// (and the field above as its placeholder), so a PUT that changes another field does not clear it.
+    /// </summary>
+    public int? CustomMinutesBetweenPickupPoints { get; set; }
 
     public List<TourPickupPointResponse> PickupPoints { get; set; } = [];
 }

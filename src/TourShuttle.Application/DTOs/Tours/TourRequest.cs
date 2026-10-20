@@ -30,6 +30,14 @@ public class TourRequest
     [Range(typeof(decimal), "0", "99999999.99")]
     public decimal Price { get; set; }
 
+    /// <summary>
+    /// Optional minutes between stops for this tour, overriding the departure-hour band.
+    /// PUT replaces every field, so leaving it out clears a value set before: send back
+    /// customMinutesBetweenPickupPoints from GET to keep it.
+    /// </summary>
+    [Range(1, 30)]
+    public int? MinutesBetweenPickupPoints { get; set; }
+
     /// <summary>The route in order: the first id is picked up first.</summary>
     [Required]
     [MinLength(1)]
