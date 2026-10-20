@@ -82,10 +82,12 @@ public class TourService : ITourService
         response.DisplayStatus = TourDisplayStatusCalculator.Calculate(tour.Status, tour.DepartureAt, tour.ReturnAt, UtcNow());
 
         // The tour has no minutes override yet (stage 8 adds the column), so it passes null.
-        response.MinutesBetweenPickupPoints = _estimator.GetMinutesBetweenPoints(tour.DepartureAt, null);
+        // Asked once per tour; every point's time is derived from the same answer.
+        var minutes = _estimator.GetMinutesBetweenPoints(tour.DepartureAt, null);
+        response.MinutesBetweenPickupPoints = minutes;
         foreach (var point in response.PickupPoints)
         {
-            point.EstimatedPickupTimeUtc = _estimator.EstimatePickupTime(tour.DepartureAt, point.Order, null);
+            point.EstimatedPickupTimeUtc = _estimator.EstimatePickupTime(tour.DepartureAt, point.Order, minutes);
         }
 
         if (!isAdmin)
@@ -258,6 +260,7 @@ public class TourService : ITourService
         }
 
         // The data is already in memory (one query); grouping it here adds no queries.
+        var minutes = _estimator.GetMinutesBetweenPoints(tour.DepartureAt, null);
         var pickupPoints = tour.PickupPoints
             .OrderBy(p => p.Order)
             .Select(point =>
@@ -280,7 +283,7 @@ public class TourService : ITourService
                     Name = point.PickupPoint.Name,
                     Address = point.PickupPoint.Address,
                     Order = point.Order,
-                    EstimatedPickupTimeUtc = _estimator.EstimatePickupTime(tour.DepartureAt, point.Order, null),
+                    EstimatedPickupTimeUtc = _estimator.EstimatePickupTime(tour.DepartureAt, point.Order, minutes),
                     TotalSeats = passengers.Sum(p => p.SeatsCount),
                     Passengers = passengers
                 };

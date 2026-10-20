@@ -19,6 +19,11 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
 COPY --from=build /app ./
 
+# NLog writes daily files to /app/logs. /app belongs to root, so the folder is created here and
+# handed to the "app" user below; otherwise the file target could not write. (Render's disk is
+# reset on every deploy, so on Render the console output is the log that lasts.)
+RUN mkdir -p /app/logs && chown app:app /app/logs
+
 # Render routes traffic to this port (set PORT=8080 on the Render service).
 ENV ASPNETCORE_HTTP_PORTS=8080
 EXPOSE 8080

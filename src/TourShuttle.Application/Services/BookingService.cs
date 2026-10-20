@@ -202,8 +202,10 @@ public class BookingService : IBookingService
         var response = _mapper.Map<BookingResponse>(booking);
         response.TourDisplayStatus = TourDisplayStatusCalculator.Calculate(
             booking.Tour.Status, booking.Tour.DepartureAt, booking.Tour.ReturnAt, UtcNow());
+        // One booking has one pickup point, so the interval is asked for once here too.
+        var minutes = _estimator.GetMinutesBetweenPoints(booking.Tour.DepartureAt, null);
         response.EstimatedPickupTimeUtc = _estimator.EstimatePickupTime(
-            booking.Tour.DepartureAt, booking.TourPickupPoint.Order, null);
+            booking.Tour.DepartureAt, booking.TourPickupPoint.Order, minutes);
         return response;
     }
 

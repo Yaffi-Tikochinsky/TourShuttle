@@ -9,6 +9,9 @@ public interface IPickupTimeEstimator
     /// </summary>
     int GetMinutesBetweenPoints(DateTime departureAtUtc, int? tourMinutes);
 
-    /// <summary>DepartureAt + (order − 1) × minutes between points. Order 1 is the first pickup.</summary>
-    DateTime EstimatePickupTime(DateTime departureAtUtc, int order, int? tourMinutes);
+    /// <summary>
+    /// DepartureAt + (order − 1) × minutes between points. Order 1 is the first pickup.
+    /// Takes the minutes from <see cref="GetMinutesBetweenPoints"/>, so a route asks for them once, not once per point.
+    /// </summary>
+    DateTime EstimatePickupTime(DateTime departureAtUtc, int order, int minutesBetweenPoints);
 }

@@ -6,6 +6,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- NLog reads its configuration from the folder the app runs in, locally and in the container. -->
+    <Content Update="nlog.config" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\TourShuttle.Application\TourShuttle.Application.csproj" />
     <ProjectReference Include="..\TourShuttle.Infrastructure\TourShuttle.Infrastructure.csproj" />
   </ItemGroup>
@@ -16,6 +21,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="NLog.Web.AspNetCore" Version="6.2.2" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.3.0" />
   </ItemGroup>
 
