@@ -13,6 +13,9 @@ public interface IPickupPointRepository
     /// <summary>Tracked lookup: changes to the result are saved by <see cref="IUnitOfWork.SaveChangesAsync"/>.</summary>
     Task<PickupPoint?> GetForUpdateAsync(int id, CancellationToken ct);
 
+    /// <summary>How many of the given ids exist, in one query.</summary>
+    Task<int> CountExistingAsync(IReadOnlyCollection<int> ids, CancellationToken ct);
+
     /// <summary>True when any tour's route includes the point.</summary>
     Task<bool> IsUsedByToursAsync(int id, CancellationToken ct);
 

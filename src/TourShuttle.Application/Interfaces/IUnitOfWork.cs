@@ -8,4 +8,10 @@ namespace TourShuttle.Application.Interfaces;
 public interface IUnitOfWork
 {
     Task SaveChangesAsync(CancellationToken ct);
+
+    /// <summary>
+    /// Runs work that needs more than one save as a single transaction: either every save
+    /// is committed, or none is.
+    /// </summary>
+    Task ExecuteInTransactionAsync(Func<Task> work, CancellationToken ct);
 }

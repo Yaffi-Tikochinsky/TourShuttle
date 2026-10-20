@@ -23,6 +23,9 @@ public class PickupPointRepository : IPickupPointRepository
     public Task<PickupPoint?> GetForUpdateAsync(int id, CancellationToken ct) =>
         _db.PickupPoints.FirstOrDefaultAsync(p => p.Id == id, ct);
 
+    public Task<int> CountExistingAsync(IReadOnlyCollection<int> ids, CancellationToken ct) =>
+        _db.PickupPoints.CountAsync(p => ids.Contains(p.Id), ct);
+
     public Task<bool> IsUsedByToursAsync(int id, CancellationToken ct) =>
         _db.TourPickupPoints.AnyAsync(tp => tp.PickupPointId == id, ct);
 

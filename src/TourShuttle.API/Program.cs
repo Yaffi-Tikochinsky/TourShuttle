@@ -20,6 +20,8 @@ if (string.IsNullOrWhiteSpace(jwt.Key) || Encoding.UTF8.GetByteCount(jwt.Key) < 
         "in production set the Jwt__Key environment variable.");
 }
 builder.Services.Configure<JwtSettings>(jwtSection);
+builder.Services.Configure<PickupTimeEstimationSettings>(
+    builder.Configuration.GetSection(PickupTimeEstimationSettings.SectionName));
 
 // Add services to the container.
 

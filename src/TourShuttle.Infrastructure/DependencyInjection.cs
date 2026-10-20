@@ -31,6 +31,7 @@ public static class DependencyInjection
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IDestinationRepository, DestinationRepository>();
         services.AddScoped<IPickupPointRepository, PickupPointRepository>();
+        services.AddScoped<ITourRepository, TourRepository>();
 
         // Singletons are safe here: neither holds a scoped dependency (only IOptions or nothing).
         services.AddSingleton<IPasswordHasher, PasswordHasher>();

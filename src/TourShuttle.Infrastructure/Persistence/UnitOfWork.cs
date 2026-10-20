@@ -37,4 +37,12 @@ public class UnitOfWork : IUnitOfWork
             throw new ForeignKeyConstraintException(ex);
         }
     }
+
+    public async Task ExecuteInTransactionAsync(Func<Task> work, CancellationToken ct)
+    {
+        // Disposing without CommitAsync (when work throws) rolls everything back.
+        await using var transaction = await _db.Database.BeginTransactionAsync(ct);
+        await work();
+        await transaction.CommitAsync(ct);
+    }
 }

@@ -1,4 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using TourShuttle.Application.Interfaces;
 using TourShuttle.Application.Mapping;
 using TourShuttle.Application.Services;
 
@@ -24,6 +26,12 @@ public static class DependencyInjection
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IDestinationService, DestinationService>();
         services.AddScoped<IPickupPointService, PickupPointService>();
+        services.AddScoped<ITourService, TourService>();
+
+        // Singletons: no per-request state, and no scoped dependencies (only IOptions).
+        services.AddSingleton<IPickupTimeEstimator, PickupTimeEstimator>();
+        // The clock is injected, so tests can freeze "now" instead of depending on the real time.
+        services.TryAddSingleton(TimeProvider.System);
 
         return services;
     }
