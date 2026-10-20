@@ -45,4 +45,6 @@ public class UnitOfWork : IUnitOfWork
         await work();
         await transaction.CommitAsync(ct);
     }
+
+    public void DiscardChanges() => _db.ChangeTracker.Clear();
 }

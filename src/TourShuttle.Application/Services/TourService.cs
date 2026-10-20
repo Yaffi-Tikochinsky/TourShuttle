@@ -242,6 +242,73 @@ public class TourService : ITourService
         return Result.Success();
     }
 
+    public async Task<Result<TourPassengersResponse>> GetPassengersAsync(int id, int requesterId, UserRole requesterRole,
+        CancellationToken ct)
+    {
+        var tour = await _tours.GetWithPassengersAsync(id, ct);
+        if (tour is null)
+        {
+            return Result<TourPassengersResponse>.NotFound(NotFoundMessage(id));
+        }
+
+        // Resource-based authorization: the Driver role is not enough, it must be this tour's driver.
+        if (requesterRole != UserRole.Admin && tour.DriverId != requesterId)
+        {
+            return Result<TourPassengersResponse>.Forbidden("Only the driver assigned to this tour can see its passengers.");
+        }
+
+        // The data is already in memory (one query); grouping it here adds no queries.
+        var pickupPoints = tour.PickupPoints
+            .OrderBy(p => p.Order)
+            .Select(point =>
+            {
+                var passengers = tour.Bookings
+                    .Where(b => b.PickupPointId == point.PickupPointId)
+                    .OrderBy(b => b.User.FullName)
+                    .Select(b => new PassengerResponse
+                    {
+                        BookingId = b.Id,
+                        FullName = b.User.FullName,
+                        Phone = b.User.Phone,
+                        SeatsCount = b.SeatsCount
+                    })
+                    .ToList();
+
+                return new PickupPointPassengersResponse
+                {
+                    PickupPointId = point.PickupPointId,
+                    Name = point.PickupPoint.Name,
+                    Address = point.PickupPoint.Address,
+                    Order = point.Order,
+                    EstimatedPickupTimeUtc = _estimator.EstimatePickupTime(tour.DepartureAt, point.Order, null),
+                    TotalSeats = passengers.Sum(p => p.SeatsCount),
+                    Passengers = passengers
+                };
+            })
+            .ToList();
+
+        return Result<TourPassengersResponse>.Success(new TourPassengersResponse
+        {
+            TourId = tour.Id,
+            DestinationName = tour.Destination.Name,
+            DepartureAt = tour.DepartureAt,
+            TotalSeats = pickupPoints.Sum(p => p.TotalSeats),
+            PickupPoints = pickupPoints
+        });
+    }
+
+    public async Task<IReadOnlyList<TourSummaryResponse>> ListForDriverAsync(int driverId, CancellationToken ct)
+    {
+        var now = UtcNow();
+        var tours = await _tours.ListForDriverAsync(driverId, now, ct);
+        foreach (var tour in tours)
+        {
+            tour.DisplayStatus = TourDisplayStatusCalculator.Calculate(tour.Status, tour.DepartureAt, tour.ReturnAt, now);
+        }
+
+        return tours;
+    }
+
     /// <summary>
     /// Rules shared by create and update that the Data Annotations cannot express.
     /// Returns the first error, or the dates converted to UTC.

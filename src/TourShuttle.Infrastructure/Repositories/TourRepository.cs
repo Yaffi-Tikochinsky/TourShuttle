@@ -72,6 +72,25 @@ public class TourRepository : ITourRepository
             .Include(t => t.PickupPoints)
             .FirstOrDefaultAsync(t => t.Id == id, ct);
 
+    public Task<Tour?> GetWithPassengersAsync(int id, CancellationToken ct) =>
+        _db.Tours.AsNoTracking()
+            .Include(t => t.Destination)
+            .Include(t => t.PickupPoints).ThenInclude(tp => tp.PickupPoint)
+            // Filtered include: cancelled bookings stay in the table as history but are not passengers.
+            .Include(t => t.Bookings.Where(b => b.Status == BookingStatus.Active)).ThenInclude(b => b.User)
+            // Two collections in one query, as the plan asks. A tour has a few dozen rows at most,
+            // so the JOIN stays small; AsSingleQuery states the choice and silences EF's warning.
+            .AsSingleQuery()
+            .FirstOrDefaultAsync(t => t.Id == id, ct);
+
+    public async Task<IReadOnlyList<TourSummaryResponse>> ListForDriverAsync(int driverId, DateTime nowUtc,
+        CancellationToken ct) =>
+        await _db.Tours.AsNoTracking()
+            .Where(t => t.DriverId == driverId && t.ReturnAt > nowUtc)
+            .OrderBy(t => t.DepartureAt)
+            .ProjectTo<TourSummaryResponse>(_mapper.ConfigurationProvider)
+            .ToListAsync(ct);
+
     public Task<bool> HasBookingsAsync(int id, CancellationToken ct) =>
         _db.Bookings.AnyAsync(b => b.TourId == id, ct);
 

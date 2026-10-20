@@ -17,6 +17,15 @@ public interface ITourRepository
     /// <summary>Tracked tour with its route rows, for update and delete.</summary>
     Task<Tour?> GetForUpdateAsync(int id, CancellationToken ct);
 
+    /// <summary>
+    /// Read-only tour with its route (with pickup points) and its active bookings (with customers),
+    /// in one query, for the passenger list.
+    /// </summary>
+    Task<Tour?> GetWithPassengersAsync(int id, CancellationToken ct);
+
+    /// <summary>A driver's tours that have not returned yet, cancelled ones included, by departure.</summary>
+    Task<IReadOnlyList<TourSummaryResponse>> ListForDriverAsync(int driverId, DateTime nowUtc, CancellationToken ct);
+
     /// <summary>True when the tour has any booking, active or cancelled.</summary>
     Task<bool> HasBookingsAsync(int id, CancellationToken ct);
 

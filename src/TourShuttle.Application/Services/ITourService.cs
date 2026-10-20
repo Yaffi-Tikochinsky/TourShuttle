@@ -1,5 +1,6 @@
 using TourShuttle.Application.Common;
 using TourShuttle.Application.DTOs.Tours;
+using TourShuttle.Domain.Enums;
 
 namespace TourShuttle.Application.Services;
 
@@ -18,4 +19,11 @@ public interface ITourService
 
     /// <summary>Refused with Conflict when the tour has bookings.</summary>
     Task<Result> DeleteAsync(int id, CancellationToken ct);
+
+    /// <summary>Active passengers grouped by pickup point. An admin, or the driver assigned to this tour.</summary>
+    Task<Result<TourPassengersResponse>> GetPassengersAsync(int id, int requesterId, UserRole requesterRole,
+        CancellationToken ct);
+
+    /// <summary>The driver's tours that have not returned yet.</summary>
+    Task<IReadOnlyList<TourSummaryResponse>> ListForDriverAsync(int driverId, CancellationToken ct);
 }

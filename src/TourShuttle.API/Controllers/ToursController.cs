@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TourShuttle.API.Extensions;
 using TourShuttle.Application.Common;
 using TourShuttle.Application.DTOs.Tours;
 using TourShuttle.Application.Services;
@@ -7,11 +8,16 @@ using TourShuttle.Domain.Enums;
 
 namespace TourShuttle.API.Controllers;
 
-/// <summary>Shuttle tours. Anyone can browse them; only an admin can change them.</summary>
+/// <summary>
+/// Shuttle tours. Anyone can browse them; only an admin can change them.
+/// Roles are set per action: a class-level [Authorize(Roles = Admin)] would also apply to the
+/// passenger list and block drivers, because class and action requirements must both pass.
+/// </summary>
 [Route("api/tours")]
-[Authorize(Roles = nameof(UserRole.Admin))]
 public class ToursController : ApiControllerBase
 {
+    private const string AdminOrDriver = nameof(UserRole.Admin) + "," + nameof(UserRole.Driver);
+
     private readonly ITourService _tours;
 
     public ToursController(ITourService tours)
@@ -19,7 +25,7 @@ public class ToursController : ApiControllerBase
         _tours = tours;
     }
 
-    // [AllowAnonymous] still reads a token when one is sent, so an admin gets the admin view here too.
+    // Anonymous actions still read a token when one is sent, so an admin gets the admin view there too.
     private bool IsAdmin => User.IsInRole(nameof(UserRole.Admin));
 
     /// <summary>Upcoming tours, filtered, sorted and paged in the database.</summary>
@@ -39,7 +45,18 @@ public class ToursController : ApiControllerBase
     public async Task<ActionResult<TourDetailsResponse>> GetById([FromRoute] int id, CancellationToken ct) =>
         FromResult(await _tours.GetByIdAsync(id, IsAdmin, ct));
 
+    /// <summary>Active passengers by pickup point: an admin, or the driver assigned to this tour.</summary>
+    [HttpGet("{id:int}/passengers")]
+    [Authorize(Roles = AdminOrDriver)]
+    [ProducesResponseType<TourPassengersResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<TourPassengersResponse>> GetPassengers([FromRoute] int id, CancellationToken ct) =>
+        FromResult(await _tours.GetPassengersAsync(id, User.GetUserId(), User.GetRole(), ct));
+
     [HttpPost]
+    [Authorize(Roles = nameof(UserRole.Admin))]
     [ProducesResponseType<TourDetailsResponse>(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -56,6 +73,7 @@ public class ToursController : ApiControllerBase
     }
 
     [HttpPut("{id:int}")]
+    [Authorize(Roles = nameof(UserRole.Admin))]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -66,6 +84,7 @@ public class ToursController : ApiControllerBase
         FromResult(await _tours.UpdateAsync(id, request, ct));
 
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = nameof(UserRole.Admin))]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]

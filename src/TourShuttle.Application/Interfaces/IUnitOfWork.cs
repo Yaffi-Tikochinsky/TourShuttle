@@ -14,4 +14,10 @@ public interface IUnitOfWork
     /// is committed, or none is.
     /// </summary>
     Task ExecuteInTransactionAsync(Func<Task> work, CancellationToken ct);
+
+    /// <summary>
+    /// Forgets every loaded and pending change, so the next read gets fresh rows from the database.
+    /// Used before retrying after a concurrency conflict.
+    /// </summary>
+    void DiscardChanges();
 }

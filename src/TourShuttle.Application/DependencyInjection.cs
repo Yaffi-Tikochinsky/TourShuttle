@@ -27,6 +27,7 @@ public static class DependencyInjection
         services.AddScoped<IDestinationService, DestinationService>();
         services.AddScoped<IPickupPointService, PickupPointService>();
         services.AddScoped<ITourService, TourService>();
+        services.AddScoped<IBookingService, BookingService>();
 
         // Singletons: no per-request state, and no scoped dependencies (only IOptions).
         services.AddSingleton<IPickupTimeEstimator, PickupTimeEstimator>();
