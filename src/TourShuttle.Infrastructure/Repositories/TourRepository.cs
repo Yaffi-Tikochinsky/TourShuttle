@@ -36,6 +36,12 @@ public class TourRepository : ITourRepository
             query = query.Where(t => t.DestinationId == destinationId);
         }
 
+        if (filter.City is { } city)
+        {
+            // "Has at least one stop in this city": SQL EXISTS over the route, still part of the same two queries.
+            query = query.Where(t => t.PickupPoints.Any(tp => tp.PickupPoint.City == city));
+        }
+
         if (!filter.IncludeCancelled)
         {
             query = query.Where(t => t.Status != TourStatus.Cancelled);
@@ -53,7 +59,8 @@ public class TourRepository : ITourRepository
         var items = await ordered.ThenBy(t => t.Id)
             .Skip(filter.Skip)
             .Take(filter.Take)
-            // Builds the DTO inside the SELECT: one query with JOINs to Destinations and Users, no N+1.
+            // Builds the DTO inside the SELECT: one query with JOINs to Destinations, Users and the route's
+            // pickup points (for the cities), no N+1.
             .ProjectTo<TourSummaryResponse>(_mapper.ConfigurationProvider)
             .ToListAsync(ct);
 

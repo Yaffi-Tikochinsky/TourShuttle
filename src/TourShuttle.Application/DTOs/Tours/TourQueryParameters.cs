@@ -7,6 +7,10 @@ public class TourQueryParameters
 {
     public int? DestinationId { get; set; }
 
+    /// <summary>Only tours with at least one stop in this city (see GET /api/pickup-points/cities).</summary>
+    [StringLength(100)]
+    public string? City { get; set; }
+
     /// <summary>Departures from this moment on (inclusive). Default: now, so past tours are hidden.</summary>
     public DateTime? From { get; set; }
 

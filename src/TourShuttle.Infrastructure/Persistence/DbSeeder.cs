@@ -36,11 +36,11 @@ public static class DbSeeder
         await context.SaveChangesAsync(ct);
 
         context.AddRange(
-            new PickupPoint { Name = "בני ברק - רבי עקיבא", Address = "רבי עקיבא 100, בני ברק" },
-            new PickupPoint { Name = "רמת גן - הבורסה", Address = "ז'בוטינסקי 7, רמת גן" },
-            new PickupPoint { Name = "פתח תקווה - צומת סגולה", Address = "ז'בוטינסקי 130, פתח תקווה" },
-            new PickupPoint { Name = "מודיעין - מרכז העיר", Address = "עמק דותן 1, מודיעין" },
-            new PickupPoint { Name = "בית שמש - רמה א'", Address = "נהר הירדן 1, בית שמש" });
+            new PickupPoint { Name = "בני ברק - רבי עקיבא", Address = "רבי עקיבא 100, בני ברק", City = "בני ברק" },
+            new PickupPoint { Name = "רמת גן - הבורסה", Address = "ז'בוטינסקי 7, רמת גן", City = "רמת גן" },
+            new PickupPoint { Name = "פתח תקווה - צומת סגולה", Address = "ז'בוטינסקי 130, פתח תקווה", City = "פתח תקווה" },
+            new PickupPoint { Name = "מודיעין - מרכז העיר", Address = "עמק דותן 1, מודיעין", City = "מודיעין" },
+            new PickupPoint { Name = "בית שמש - רמה א'", Address = "נהר הירדן 1, בית שמש", City = "בית שמש" });
         await context.SaveChangesAsync(ct);
     }
 

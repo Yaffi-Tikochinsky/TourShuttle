@@ -7,5 +7,11 @@ public class PickupPoint
     public string Name { get; set; } = default!;
     public string Address { get; set; } = default!;
 
+    /// <summary>
+    /// The city the stop is in. Customers filter tours by it: a tour appears for a city
+    /// when any stop on its route is there, since a route can pass through several cities.
+    /// </summary>
+    public string City { get; set; } = default!;
+
     public ICollection<TourPickupPoint> Tours { get; set; } = new List<TourPickupPoint>();
 }

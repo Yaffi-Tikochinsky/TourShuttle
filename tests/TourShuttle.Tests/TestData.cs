@@ -79,7 +79,10 @@ public static class TestData
                 TourId = id,
                 Tour = tour,
                 PickupPointId = points[i],
-                PickupPoint = new PickupPoint { Id = points[i], Name = $"Point {points[i]}", Address = $"Street {points[i]}" },
+                PickupPoint = new PickupPoint
+                {
+                    Id = points[i], Name = $"Point {points[i]}", Address = $"Street {points[i]}", City = $"City {points[i]}"
+                },
                 Order = i + 1
             });
         }

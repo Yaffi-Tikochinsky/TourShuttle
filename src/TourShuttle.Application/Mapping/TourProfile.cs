@@ -13,6 +13,9 @@ public class TourProfile : Profile
             .ForMember(dest => dest.DestinationName, opt => opt.MapFrom(src => src.Destination.Name))
             .ForMember(dest => dest.City, opt => opt.MapFrom(src => src.Destination.City))
             .ForMember(dest => dest.DriverName, opt => opt.MapFrom(src => src.Driver != null ? src.Driver.FullName : null))
+            // One city per stop, in route order; the service removes repeats (Distinct here would lose the order in SQL).
+            .ForMember(dest => dest.Cities, opt => opt.MapFrom(src =>
+                src.PickupPoints.OrderBy(p => p.Order).Select(p => p.PickupPoint.City).ToList()))
             // Depends on the current time, so the service sets it after the query.
             .ForMember(dest => dest.DisplayStatus, opt => opt.Ignore());
 

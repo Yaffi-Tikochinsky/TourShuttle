@@ -28,6 +28,8 @@ public class PickupPointService : IPickupPointService
     public async Task<IReadOnlyList<PickupPointResponse>> ListAsync(CancellationToken ct) =>
         _mapper.Map<IReadOnlyList<PickupPointResponse>>(await _pickupPoints.ListAsync(ct));
 
+    public Task<IReadOnlyList<string>> ListCitiesAsync(CancellationToken ct) => _pickupPoints.ListCitiesAsync(ct);
+
     public async Task<Result<PickupPointResponse>> GetByIdAsync(int id, CancellationToken ct)
     {
         var pickupPoint = await _pickupPoints.GetByIdAsync(id, ct);

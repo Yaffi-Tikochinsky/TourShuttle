@@ -6,6 +6,9 @@ namespace TourShuttle.Application.Services;
 public interface IPickupPointService
 {
     Task<IReadOnlyList<PickupPointResponse>> ListAsync(CancellationToken ct);
+
+    /// <summary>The cities customers can search tours from (every city with a stop).</summary>
+    Task<IReadOnlyList<string>> ListCitiesAsync(CancellationToken ct);
     Task<Result<PickupPointResponse>> GetByIdAsync(int id, CancellationToken ct);
     Task<Result<PickupPointResponse>> CreateAsync(PickupPointRequest request, CancellationToken ct);
     Task<Result> UpdateAsync(int id, PickupPointRequest request, CancellationToken ct);

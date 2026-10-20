@@ -24,6 +24,16 @@ public class PickupPointsController : ApiControllerBase
     public async Task<ActionResult<IReadOnlyList<PickupPointResponse>>> List(CancellationToken ct) =>
         Ok(await _pickupPoints.ListAsync(ct));
 
+    /// <summary>
+    /// The cities with stops, for the "Where are you leaving from?" search. Public, unlike the rest of this
+    /// controller: a guest chooses a city before signing in. GET /api/tours?city=... filters by it.
+    /// </summary>
+    [HttpGet("cities")]
+    [AllowAnonymous]
+    [ProducesResponseType<IReadOnlyList<string>>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyList<string>>> ListCities(CancellationToken ct) =>
+        Ok(await _pickupPoints.ListCitiesAsync(ct));
+
     [HttpGet("{id:int}")]
     [ProducesResponseType<PickupPointResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

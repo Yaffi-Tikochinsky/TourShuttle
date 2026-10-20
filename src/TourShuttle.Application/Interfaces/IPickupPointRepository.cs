@@ -16,6 +16,9 @@ public interface IPickupPointRepository
     /// <summary>How many of the given ids exist, in one query.</summary>
     Task<int> CountExistingAsync(IReadOnlyCollection<int> ids, CancellationToken ct);
 
+    /// <summary>Every city that has at least one stop, alphabetically, each once.</summary>
+    Task<IReadOnlyList<string>> ListCitiesAsync(CancellationToken ct);
+
     /// <summary>True when any tour's route includes the point.</summary>
     Task<bool> IsUsedByToursAsync(int id, CancellationToken ct);
 

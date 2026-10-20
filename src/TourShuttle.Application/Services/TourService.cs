@@ -52,6 +52,7 @@ public class TourService : ITourService
 
         var filter = new TourListFilter(
             query.DestinationId,
+            string.IsNullOrWhiteSpace(query.City) ? null : query.City.Trim(),
             from,
             to,
             query.SortBy,
@@ -63,7 +64,7 @@ public class TourService : ITourService
         var (items, totalCount) = await _tours.ListAsync(filter, ct);
         foreach (var item in items)
         {
-            item.DisplayStatus = TourDisplayStatusCalculator.Calculate(item.Status, item.DepartureAt, item.ReturnAt, now);
+            Complete(item, now);
         }
 
         return Result<PagedResult<TourSummaryResponse>>.Success(
@@ -79,7 +80,7 @@ public class TourService : ITourService
         }
 
         var response = _mapper.Map<TourDetailsResponse>(tour);
-        response.DisplayStatus = TourDisplayStatusCalculator.Calculate(tour.Status, tour.DepartureAt, tour.ReturnAt, UtcNow());
+        Complete(response, UtcNow());
 
         // Asked once per tour; every point's time is derived from the same answer.
         var minutes = _estimator.GetMinutesBetweenPoints(tour.DepartureAt, tour.MinutesBetweenPickupPoints);
@@ -309,10 +310,20 @@ public class TourService : ITourService
         var tours = await _tours.ListForDriverAsync(driverId, now, ct);
         foreach (var tour in tours)
         {
-            tour.DisplayStatus = TourDisplayStatusCalculator.Calculate(tour.Status, tour.DepartureAt, tour.ReturnAt, now);
+            Complete(tour, now);
         }
 
         return tours;
+    }
+
+    /// <summary>
+    /// The parts of a list row the database query cannot give: the status depends on the clock, and the
+    /// route's cities arrive one per stop in route order (two stops in Bnei Brak list it once, keeping the order).
+    /// </summary>
+    private static void Complete(TourSummaryResponse tour, DateTime now)
+    {
+        tour.DisplayStatus = TourDisplayStatusCalculator.Calculate(tour.Status, tour.DepartureAt, tour.ReturnAt, now);
+        tour.Cities = tour.Cities.Distinct().ToList();
     }
 
     /// <summary>

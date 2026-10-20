@@ -6,6 +6,7 @@ namespace TourShuttle.Application.DTOs.Tours;
 /// </summary>
 public record TourListFilter(
     int? DestinationId,
+    string? City,
     DateTime From,
     DateTime? To,
     TourSortBy SortBy,

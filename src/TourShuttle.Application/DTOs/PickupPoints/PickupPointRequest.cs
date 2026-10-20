@@ -12,4 +12,9 @@ public class PickupPointRequest
     [Required]
     [StringLength(200, MinimumLength = 2)]
     public string Address { get; set; } = default!;
+
+    /// <summary>Customers find tours by this city, so it must be written the same way for every stop in it.</summary>
+    [Required]
+    [StringLength(100, MinimumLength = 2)]
+    public string City { get; set; } = default!;
 }

@@ -20,4 +20,7 @@ public class TourSummaryResponse
 
     /// <summary>The name only; the driver's phone is not public.</summary>
     public string? DriverName { get; set; }
+
+    /// <summary>The cities the route passes through, in route order, each once: "בני ברק · רמת גן · פתח תקווה".</summary>
+    public List<string> Cities { get; set; } = [];
 }
