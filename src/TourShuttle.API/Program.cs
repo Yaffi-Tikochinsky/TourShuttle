@@ -68,6 +68,8 @@ builder.Services.AddProblemDetails(options => options.CustomizeProblemDetails = 
     context.ProblemDetails.Extensions["correlationId"] =
         CorrelationIdMiddleware.Get(context.HttpContext) ?? context.HttpContext.TraceIdentifier;
 });
+// Liveness check for Render: answers 200 as long as the process is up, without touching the database.
+builder.Services.AddHealthChecks();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -119,5 +121,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+// Render's Health Check Path. Cheaper than the old /swagger/v1/swagger.json, which rebuilt the whole document every few seconds.
+app.MapHealthChecks(RequestLoggingMiddleware.HealthPath);
 
 app.Run();

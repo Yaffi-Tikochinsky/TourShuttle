@@ -10,6 +10,9 @@ namespace TourShuttle.API.Middleware;
 /// </summary>
 public class RequestLoggingMiddleware
 {
+    /// <summary>Render calls it every few seconds; logging each call would bury the real requests.</summary>
+    public const string HealthPath = "/health";
+
     private readonly RequestDelegate _next;
     private readonly ILogger<RequestLoggingMiddleware> _logger;
 
@@ -21,6 +24,12 @@ public class RequestLoggingMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
+        if (context.Request.Path.Equals(HealthPath, StringComparison.OrdinalIgnoreCase))
+        {
+            await _next(context);
+            return;
+        }
+
         var start = Stopwatch.GetTimestamp();
         try
         {
