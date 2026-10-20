@@ -15,19 +15,42 @@ public enum ResultStatus
 /// Services return a Result instead of throwing or knowing about HTTP,
 /// so they can be unit tested without any web infrastructure.
 /// </summary>
-public class Result<T>
+public abstract class ResultBase
 {
-    private Result(ResultStatus status, T? value, string? error)
+    protected ResultBase(ResultStatus status, string? error)
     {
         Status = status;
-        Value = value;
         Error = error;
     }
 
     public ResultStatus Status { get; }
-    public T? Value { get; }
     public string? Error { get; }
     public bool IsSuccess => Status == ResultStatus.Success;
+}
+
+/// <summary>An outcome with no value on success, such as an update or a delete (HTTP 204).</summary>
+public class Result : ResultBase
+{
+    private Result(ResultStatus status, string? error) : base(status, error)
+    {
+    }
+
+    public static Result Success() => new(ResultStatus.Success, null);
+    public static Result Validation(string error) => new(ResultStatus.Validation, error);
+    public static Result Forbidden(string error) => new(ResultStatus.Forbidden, error);
+    public static Result NotFound(string error) => new(ResultStatus.NotFound, error);
+    public static Result Conflict(string error) => new(ResultStatus.Conflict, error);
+}
+
+/// <summary>An outcome that carries a value on success.</summary>
+public class Result<T> : ResultBase
+{
+    private Result(ResultStatus status, T? value, string? error) : base(status, error)
+    {
+        Value = value;
+    }
+
+    public T? Value { get; }
 
     public static Result<T> Success(T value) => new(ResultStatus.Success, value, null);
     public static Result<T> Validation(string error) => new(ResultStatus.Validation, default, error);

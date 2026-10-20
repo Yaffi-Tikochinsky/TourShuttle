@@ -22,6 +22,8 @@ public static class DependencyInjection
 
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IUserService, UserService>();
+        services.AddScoped<IDestinationService, DestinationService>();
+        services.AddScoped<IPickupPointService, PickupPointService>();
 
         return services;
     }

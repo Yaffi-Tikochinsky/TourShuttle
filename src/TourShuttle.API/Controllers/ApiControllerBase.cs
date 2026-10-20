@@ -11,8 +11,12 @@ public abstract class ApiControllerBase : ControllerBase
     protected ActionResult<T> FromResult<T>(Result<T> result) =>
         result.IsSuccess ? Ok(result.Value) : Failure(result);
 
+    /// <summary>Returns 204 on success (updates and deletes), or the matching error status.</summary>
+    protected ActionResult FromResult(Result result) =>
+        result.IsSuccess ? NoContent() : Failure(result);
+
     /// <summary>Maps a failed result to 400/401/403/404/409.</summary>
-    protected ActionResult Failure<T>(Result<T> result)
+    protected ActionResult Failure(ResultBase result)
     {
         var status = result.Status switch
         {

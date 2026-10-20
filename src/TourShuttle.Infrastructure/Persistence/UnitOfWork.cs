@@ -32,5 +32,9 @@ public class UnitOfWork : IUnitOfWork
         {
             throw new UniqueConstraintException(ex);
         }
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.ForeignKeyViolation })
+        {
+            throw new ForeignKeyConstraintException(ex);
+        }
     }
 }

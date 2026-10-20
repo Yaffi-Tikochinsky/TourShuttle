@@ -2,8 +2,8 @@ namespace TourShuttle.Application.Interfaces;
 
 /// <summary>
 /// Saves every change made through the repositories in one transaction.
-/// Throws <see cref="Common.ConcurrencyConflictException"/> or <see cref="Common.UniqueConstraintException"/>
-/// instead of database-specific exceptions.
+/// Throws <see cref="Common.ConcurrencyConflictException"/>, <see cref="Common.UniqueConstraintException"/>
+/// or <see cref="Common.ForeignKeyConstraintException"/> instead of database-specific exceptions.
 /// </summary>
 public interface IUnitOfWork
 {

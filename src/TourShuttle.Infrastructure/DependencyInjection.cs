@@ -29,6 +29,8 @@ public static class DependencyInjection
         // Scoped, because they depend on the scoped AppDbContext.
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IDestinationRepository, DestinationRepository>();
+        services.AddScoped<IPickupPointRepository, PickupPointRepository>();
 
         // Singletons are safe here: neither holds a scoped dependency (only IOptions or nothing).
         services.AddSingleton<IPasswordHasher, PasswordHasher>();

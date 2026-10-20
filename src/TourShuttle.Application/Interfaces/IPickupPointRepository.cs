@@ -1,0 +1,22 @@
+using TourShuttle.Domain.Entities;
+
+namespace TourShuttle.Application.Interfaces;
+
+public interface IPickupPointRepository
+{
+    /// <summary>Read-only list, ordered by name.</summary>
+    Task<IReadOnlyList<PickupPoint>> ListAsync(CancellationToken ct);
+
+    /// <summary>Read-only lookup (not tracked).</summary>
+    Task<PickupPoint?> GetByIdAsync(int id, CancellationToken ct);
+
+    /// <summary>Tracked lookup: changes to the result are saved by <see cref="IUnitOfWork.SaveChangesAsync"/>.</summary>
+    Task<PickupPoint?> GetForUpdateAsync(int id, CancellationToken ct);
+
+    /// <summary>True when any tour's route includes the point.</summary>
+    Task<bool> IsUsedByToursAsync(int id, CancellationToken ct);
+
+    void Add(PickupPoint pickupPoint);
+
+    void Remove(PickupPoint pickupPoint);
+}

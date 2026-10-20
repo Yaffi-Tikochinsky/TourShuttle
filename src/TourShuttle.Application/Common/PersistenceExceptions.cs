@@ -23,3 +23,15 @@ public class UniqueConstraintException : Exception
     {
     }
 }
+
+/// <summary>
+/// The save broke a foreign key, for example deleting a destination while another request
+/// is adding a tour to it. The service checks first; this covers the moment between check and save.
+/// </summary>
+public class ForeignKeyConstraintException : Exception
+{
+    public ForeignKeyConstraintException(Exception innerException)
+        : base("The record is referenced by other records.", innerException)
+    {
+    }
+}
