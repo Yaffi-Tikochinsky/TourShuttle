@@ -28,6 +28,8 @@ public interface ITourRepository
 
     /// <summary>True when the tour has any booking, active or cancelled.</summary>
     Task<bool> HasBookingsAsync(int id, CancellationToken ct);
+    /// <summary>Tracked tour with its active bookings (tracked too), so cancelling the tour cancels them in the same save.</summary>
+    Task<Tour?> GetWithActiveBookingsForUpdateAsync(int id, CancellationToken ct);
 
     void Add(Tour tour);
 

@@ -13,6 +13,7 @@ public class TourService : ITourService
     private const string LockedByBookings =
         "The tour has bookings, so its destination, departure time and route cannot change. Cancel it and create a new tour instead.";
     private const string ChangedByOthers = "The tour was changed by another request. Reload it and try again.";
+    private const int MaxCancelAttempts = 3;
 
     private readonly ITourRepository _tours;
     private readonly IDestinationRepository _destinations;
@@ -224,7 +225,7 @@ public class TourService : ITourService
             return Result.NotFound(NotFoundMessage(id));
         }
 
-        const string hasBookings = "The tour has bookings and cannot be deleted. Cancel it instead.";
+        const string hasBookings = "The tour has bookings and cannot be deleted. Cancel it instead (POST /api/tours/{id}/cancel).";
         if (await _tours.HasBookingsAsync(id, ct))
         {
             return Result.Conflict(hasBookings);
@@ -246,6 +247,57 @@ public class TourService : ITourService
 
         _logger.LogInformation("Tour {TourId} deleted", id);
         return Result.Success();
+    }
+
+    public async Task<Result<int>> CancelAsync(int id, CancellationToken ct)
+    {
+        for (var attempt = 1; attempt <= MaxCancelAttempts; attempt++)
+        {
+            var tour = await _tours.GetWithActiveBookingsForUpdateAsync(id, ct);
+            if (tour is null)
+            {
+                return Result<int>.NotFound(NotFoundMessage(id));
+            }
+
+            if (tour.Status == TourStatus.Cancelled)
+            {
+                return Result<int>.Conflict("The tour is already cancelled.");
+            }
+
+            if (tour.DepartureAt <= UtcNow())
+            {
+                return Result<int>.Validation("The tour has already left, so it can no longer be cancelled.");
+            }
+
+            // The tour and its bookings change together in one SaveChanges, which is one transaction:
+            // either the tour is cancelled with every booking, or nothing changes.
+            tour.Status = TourStatus.Cancelled;
+            foreach (var booking in tour.Bookings)
+            {
+                booking.Status = BookingStatus.Cancelled;
+            }
+            tour.AvailableSeats = tour.Capacity;
+            var cancelledBookings = tour.Bookings.Count;
+
+            try
+            {
+                await _unitOfWork.SaveChangesAsync(ct);
+            }
+            catch (ConcurrencyConflictException)
+            {
+                // A booking was made or cancelled after we read the tour (the Version changed): read again, so
+                // that a booking created a moment ago is cancelled too, instead of being left on a cancelled tour.
+                _logger.LogWarning("Conflict while cancelling tour {TourId} (attempt {Attempt} of {MaxAttempts})",
+                    id, attempt, MaxCancelAttempts);
+                _unitOfWork.DiscardChanges();
+                continue;
+            }
+
+            _logger.LogInformation("Tour {TourId} cancelled with {BookingCount} active bookings", id, cancelledBookings);
+            return Result<int>.Success(cancelledBookings);
+        }
+
+        return Result<int>.Conflict(ChangedByOthers);
     }
 
     public async Task<Result<TourPassengersResponse>> GetPassengersAsync(int id, int requesterId, UserRole requesterRole,

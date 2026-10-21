@@ -19,6 +19,11 @@ public interface ITourService
 
     /// <summary>Refused with Conflict when the tour has bookings.</summary>
     Task<Result> DeleteAsync(int id, CancellationToken ct);
+    /// <summary>
+    /// Marks the tour Cancelled and cancels all its active bookings in one save (one transaction).
+    /// Only before departure; a tour already cancelled is a Conflict.
+    /// </summary>
+    Task<Result<int>> CancelAsync(int id, CancellationToken ct);
 
     /// <summary>Active passengers grouped by pickup point. An admin, or the driver assigned to this tour.</summary>
     Task<Result<TourPassengersResponse>> GetPassengersAsync(int id, int requesterId, UserRole requesterRole,

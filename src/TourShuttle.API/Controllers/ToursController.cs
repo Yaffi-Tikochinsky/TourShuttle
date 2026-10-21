@@ -92,4 +92,24 @@ public class ToursController : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult> Delete([FromRoute] int id, CancellationToken ct) =>
         FromResult(await _tours.DeleteAsync(id, ct));
+
+    /// <summary>
+    /// Cancels a tour that has not left: the tour becomes Cancelled and all its active bookings are cancelled
+    /// with it, in one transaction. The tour stays in the system (unlike DELETE), with its history.
+    /// </summary>
+    [HttpPost("{id:int}/cancel")]
+    [Authorize(Roles = nameof(UserRole.Admin))]
+    [ProducesResponseType<TourCancelledResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<TourCancelledResponse>> Cancel([FromRoute] int id, CancellationToken ct)
+    {
+        var result = await _tours.CancelAsync(id, ct);
+        return result.IsSuccess
+            ? Ok(new TourCancelledResponse { TourId = id, CancelledBookings = result.Value })
+            : Failure(result);
+    }
 }

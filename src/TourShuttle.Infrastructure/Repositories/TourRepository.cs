@@ -101,6 +101,12 @@ public class TourRepository : ITourRepository
     public Task<bool> HasBookingsAsync(int id, CancellationToken ct) =>
         _db.Bookings.AnyAsync(b => b.TourId == id, ct);
 
+    // A filtered Include: only the active bookings are loaded, in the same query as the tour.
+    public Task<Tour?> GetWithActiveBookingsForUpdateAsync(int id, CancellationToken ct) =>
+        _db.Tours
+            .Include(t => t.Bookings.Where(b => b.Status == BookingStatus.Active))
+            .FirstOrDefaultAsync(t => t.Id == id, ct);
+
     public void Add(Tour tour) => _db.Tours.Add(tour);
 
     public void Remove(Tour tour) => _db.Tours.Remove(tour);
