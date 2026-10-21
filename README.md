@@ -141,7 +141,18 @@ GitHub Actions מריץ build ובדיקות על כל push.
 | `ConnectionStrings__Default` | ה-connection string של מסד הנתונים ב-Render |
 | `Jwt__Key` | מחרוזת אקראית ארוכה (Generate ב-Render) |
 | `Cors__AllowedOrigins__0` | כתובת הקליינט, בלי `/` בסוף |
-| `AutoMapper__LicenseKey` | מפתח הרישיון של AutoMapper |
+| `AutoMapper__LicenseKey` | מפתח הרישיון של AutoMapper (אופציונלי, ראו למטה) |
 | `PORT` | `8080` |
 
 ה-Health Check Path הוא `/health`.
+
+## הערה: אזהרת הרישיון של AutoMapper
+מגרסה 15 AutoMapper מופצת ברישיון מסחרי של Lucky Penny Software, ויש לה גם רישיון Community חינמי לשימוש לא מסחרי ולימודי. הפרויקט רץ כרגע בלי מפתח, ולכן בעלייה מופיעה בלוג שורת Warning אחת:
+
+> You do not have a valid license key for the Lucky Penny software AutoMapper. This is allowed for development and testing scenarios...
+
+זו לא תקלה. לפי ההודעה עצמה, בלי מפתח השימוש מותר לפיתוח ולבדיקות, וזה מה שהפרויקט הלימודי הזה הוא. ה-mapping עובד במלואו.
+
+כשיהיה מפתח, האזהרה נעלמת בלי שום שינוי בקוד. `Program.cs` כבר קורא את `AutoMapper:LicenseKey` מההגדרות:
+- **מקומית:** `dotnet user-secrets set "AutoMapper:LicenseKey" "<המפתח>" --project src/TourShuttle.API`
+- **ב-Render:** משתנה הסביבה `AutoMapper__LicenseKey`.
