@@ -68,6 +68,23 @@ builder.Services.AddProblemDetails(options => options.CustomizeProblemDetails = 
     context.ProblemDetails.Extensions["correlationId"] =
         CorrelationIdMiddleware.Get(context.HttpContext) ?? context.HttpContext.TraceIdentifier;
 });
+// CORS: the React client is served from another origin (its own Render Static Site), so the browser asks the
+// API for permission before every cross-origin call. Only the origins listed in Cors:AllowedOrigins get it:
+// in development the Vite servers (appsettings.Development.json), on Render the client's URL through
+// the environment variable Cors__AllowedOrigins__0. The token travels in the Authorization header, not
+// in a cookie, so credentials are not allowed (no AllowCredentials).
+const string ClientCorsPolicy = "Client";
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+builder.Services.AddCors(options => options.AddPolicy(ClientCorsPolicy, policy => policy
+    .WithOrigins(allowedOrigins.Select(o => o.TrimEnd('/')).ToArray())
+    .WithMethods("GET", "POST", "PUT", "DELETE")
+    .WithHeaders("Authorization", "Content-Type", CorrelationIdMiddleware.HeaderName)
+    // Response headers the client's JavaScript may read: the correlation id it shows with errors,
+    // and Location of a created resource.
+    .WithExposedHeaders(CorrelationIdMiddleware.HeaderName, "Location")
+    // The browser may reuse a preflight answer for 10 minutes instead of asking before every request.
+    .SetPreflightMaxAge(TimeSpan.FromMinutes(10))));
+
 // Liveness check for Render: answers 200 as long as the process is up, without touching the database.
 builder.Services.AddHealthChecks();
 builder.Services.AddEndpointsApiExplorer();
@@ -89,6 +106,16 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
+// A missing Cors__AllowedOrigins__0 on Render shows up here, rather than only as "blocked by CORS" in a browser.
+if (allowedOrigins.Length == 0)
+{
+    app.Logger.LogWarning("CORS: no allowed origins are configured (Cors:AllowedOrigins); browsers on other origins will be refused");
+}
+else
+{
+    app.Logger.LogInformation("CORS: allowed origins {Origins}", string.Join(", ", allowedOrigins));
+}
+
 // Create or update the database schema and seed demo data before serving requests.
 await app.Services.InitializeDatabaseAsync();
 
@@ -97,9 +124,13 @@ await app.Services.InitializeDatabaseAsync();
 app.UseMiddleware<CorrelationIdMiddleware>();
 // 2. Request logging outside the exception handler, so a failed request is logged with its final status (500).
 app.UseMiddleware<RequestLoggingMiddleware>();
-// 3. Exception handling around everything that does real work.
+// 3. CORS outside the exception handler, so error responses (400, 409, 500) carry the CORS headers too;
+//    without them the browser would hide the ProblemDetails body from the client. It also answers preflight
+//    OPTIONS requests here, before authentication (a preflight never carries the token).
+app.UseCors(ClientCorsPolicy);
+// 4. Exception handling around everything that does real work.
 app.UseMiddleware<ExceptionHandlingMiddleware>();
-// 4. Error responses with no body (401/403 from JwtBearer, 404 for unknown URLs) get a ProblemDetails body.
+// 5. Error responses with no body (401/403 from JwtBearer, 404 for unknown URLs) get a ProblemDetails body.
 app.UseStatusCodePages();
 
 // Swagger is on in every environment: it is the API documentation the course reviews on Render.
