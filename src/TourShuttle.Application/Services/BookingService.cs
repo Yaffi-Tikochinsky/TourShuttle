@@ -72,6 +72,10 @@ public class BookingService : IBookingService
 
             if (tour.AvailableSeats < request.SeatsCount)
             {
+                // A conflict over seats like the version conflict below, only noticed one step earlier
+                // (the other booking had already committed when this one read the tour): logged the same way.
+                _logger.LogWarning("Not enough seats on tour {TourId}: {AvailableSeats} left, {RequestedSeats} requested",
+                    tourId, tour.AvailableSeats, request.SeatsCount);
                 return Result<BookingResponse>.Conflict(
                     $"Not enough seats: {tour.AvailableSeats} left and {request.SeatsCount} requested.");
             }

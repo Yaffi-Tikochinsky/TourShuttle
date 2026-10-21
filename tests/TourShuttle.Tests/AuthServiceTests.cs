@@ -120,6 +120,15 @@ public class AuthServiceTests
     }
 
     [Fact]
+    public async Task Unknown_email_still_runs_a_password_check_so_timing_does_not_reveal_registered_emails()
+    {
+        var result = await CreateService().LoginAsync(new LoginRequest { Email = "nobody@test.demo", Password = "whatever1" }, default);
+
+        Assert.Equal(ResultStatus.Unauthorized, result.Status);
+        _hasher.Verify(h => h.Verify(It.IsAny<string>(), "whatever1"), Times.Once);
+    }
+
+    [Fact]
     public async Task Correct_password_returns_a_token()
     {
         var user = TestData.User(3, UserRole.Customer);

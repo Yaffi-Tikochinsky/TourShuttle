@@ -15,6 +15,10 @@ public class AuthService : IAuthService
     private const string InvalidCredentials = "The email or password is incorrect.";
     private const string EmailTaken = "An account with this email already exists.";
 
+    // A real hash of a random-looking value, made once. A login with an unknown email is verified against it,
+    // so it takes as long as a login with a known email: the response time does not reveal who is registered.
+    private static string? _dummyHash;
+
     private readonly IUserRepository _users;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IPasswordHasher _passwordHasher;
@@ -96,6 +100,12 @@ public class AuthService : IAuthService
     public async Task<Result<AuthResponse>> LoginAsync(LoginRequest request, CancellationToken ct)
     {
         var user = await _users.GetByEmailAsync(NormalizeEmail(request.Email), ct);
+
+        if (user is null)
+        {
+            _dummyHash ??= _passwordHasher.Hash(Guid.NewGuid().ToString());
+            _passwordHasher.Verify(_dummyHash, request.Password);
+        }
 
         if (user is null || !_passwordHasher.Verify(user.PasswordHash, request.Password))
         {
